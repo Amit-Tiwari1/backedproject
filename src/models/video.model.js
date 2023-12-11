@@ -13,11 +13,11 @@ const videoSchema = new Schema(
       required: [true, "thumbnail is required"],
     },
     title: {
-      type: String, //url will be store
+      type: String, 
       required: [true, "title is required"],
     },
     description: {
-      type: String, //url will be store
+      type: String, 
       required: [true, "description  should be under 200 words"],
     },
     duration: {
@@ -40,5 +40,5 @@ const videoSchema = new Schema(
   { timestamps: true }
 );
 
-videoSchema.plugin(mongooseAggregatePaginate)
+videoSchema.plugin(mongooseAggregatePaginate) 
 export const Video = mongoose.model("Video",videoSchema)
