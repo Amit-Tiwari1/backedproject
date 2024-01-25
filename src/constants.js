@@ -1,1 +1,1 @@
-export const DB_NAME = "mernlearn"
+export const DB_NAME = "mernlearn";

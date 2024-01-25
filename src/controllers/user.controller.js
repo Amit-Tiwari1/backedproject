@@ -3,6 +3,7 @@ import { ApiError } from "../utils/ApiError.js";
 import { User } from "../models/user.model.js";
 import { uploadCloudinary } from "../utils/cloudinary.js";
 import { ApiResponse } from "../utils/ApiResponse.js";
+import jwt from "jsonwebtoken";
 
 const generateAccessTokenAndRefereshToken = async (userId) => {
   try {
@@ -36,7 +37,8 @@ const registerUser = asyncHandler(async (req, res) => {
   // });
 
   const { fullName, email, username, password } = req.body;
-
+  console.log("data", req.body);
+  console.log("data", req.files);
   if (
     [fullName, email, username, password].some((field) => field?.trim() === "")
   ) {
@@ -67,7 +69,7 @@ const registerUser = asyncHandler(async (req, res) => {
     coverImage: coverImage?.url || "",
     email,
     password,
-    username: username.toLowerCase,
+    username: username.toLowerCase(),
   });
 
   const createdUser = await User.findById(user._id).select(
@@ -92,7 +94,7 @@ const loginUser = asyncHandler(async (req, res) => {
   // send cookie
 
   const { email, username, password } = req.body;
-  if (!username || !email) {
+  if (!username && !email) {
     throw new ApiError(400, "username or password is required");
   }
   const user = await User.findOne({
@@ -107,8 +109,9 @@ const loginUser = asyncHandler(async (req, res) => {
   }
   const { accessToken, refreshToken } =
     await generateAccessTokenAndRefereshToken(user._id);
-  const logedInUser = await User.findById(user._id);
-  select("-password -refreshToken");
+  const logedInUser = await User.findById(user._id)
+    .select("-password -refreshToken")
+    .lean();
 
   const options = {
     httpOnly: true,
@@ -148,11 +151,19 @@ const logoutUser = asyncHandler(async (req, res) => {
     secure: true,
   };
   return (
-    res.status(200).clearCookies("accessToken", options),
-    clearCookies("refreshToken", options).json(
-      new ApiResponse(200, {}, "User logged Out")
-    )
+    res.status(200).clearCookie("accessToken", options),
+    res
+      .clearCookie("refreshToken", options)
+      .json(new ApiResponse(200, {}, "User logged Out"))
   );
 });
 
+const referenshAccessToken = asyncHandler(async (req, res) => {
+  const incomingRefreshToken =
+    req.cookies.refreshToken || req.body.referenshToken;
+  if (!incomingRefreshToken) {
+    throw (new ApiError(401), "unauthorized request");
+    process.env.REFRESH_TOKEN_SECRET;
+  }
+});
 export { registerUser, loginUser, logoutUser };
